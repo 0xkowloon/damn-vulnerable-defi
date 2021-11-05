@@ -11,7 +11,6 @@ import "./SimpleGovernance.sol";
  * @author Damn Vulnerable DeFi (https://damnvulnerabledefi.xyz)
  */
 contract SelfiePool is ReentrancyGuard {
-
     using Address for address;
 
     ERC20Snapshot public token;

